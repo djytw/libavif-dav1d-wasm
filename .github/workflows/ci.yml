@@ -37,14 +37,19 @@ jobs:
           emcmake cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DAVIF_LOCAL_DAV1D=ON -DAVIF_CODEC_DAV1D=ON ..
           ninja
 
+      - name: Build WebAssembly
+        run: |
+          make
+          mkdir -p build/libavif/libs
+          cp libavif/build/libavif.a build/libavif/libs/
+          cp libavif/ext/dav1d/build/src/libdav1d.a build/libavif/libs/
+          cp -r libavif/include/ build/libavif/
+
       - name: Upload artifact
         uses: actions/upload-artifact@v2.2.0
         with:
           name: libavif-dav1d-wasm
-          path: |
-            libavif/build/libavif.a
-            libavif/ext/dav1d/build/src/libdav1d.a
-            libavif/include/avif/avif.h
+          path: build/
           retention-days: 30
           
           
