@@ -1,0 +1,54 @@
+name: GitHub Actions
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+        
+      - uses: mymindstorm/setup-emsdk@v7
+      - name: Preparations
+        run: |
+          sudo apt-get install ninja-build
+          sudo pip3 --disable-pip-version-check install meson
+          
+      - name: Build dav1d
+        run: |
+          cd libavif/ext/
+          git clone -b 0.8.2 --depth 1 https://code.videolan.org/videolan/dav1d.git
+          cd dav1d
+          mkdir build
+          cd build
+          meson --cross-file=../../../../emscripten.txt -Denable_asm=false -Dbitdepths=8 -Denable_tools=false -Denable_tests=false --default-library=static --buildtype release ..
+          ninja
+          
+      - name: Build libavif
+        run: |
+          cd libavif
+          mkdir build
+          cd build
+          emcmake cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DAVIF_LOCAL_DAV1D=ON -DAVIF_CODEC_DAV1D=ON ..
+          ninja
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2.2.0
+        with:
+          name: libavif-dav1d-wasm
+          path: |
+            libavif/build/libavif.a
+            libavif/ext/dav1d/build/src/libdav1d.a
+            libavif/include/avif/avif.h
+          retention-days: 30
+          
+          
+          
+          
+          
+          
